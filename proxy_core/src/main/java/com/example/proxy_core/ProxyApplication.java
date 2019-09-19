@@ -43,10 +43,9 @@ public class ProxyApplication extends Application {
         File apkFile = new File(getApplicationInfo().sourceDir);
 
         //把apk解压   app_name+"_"+app_version目录中的内容需要boot权限才能用
-        File versionDir = getDir("yangkun", Context.MODE_PRIVATE);
-        File appDir = new File(versionDir, "app");
-        File dexDir = new File(appDir, "dexDir");
-        Log.e(TAG, "attachBaseContext: versionDir=" + versionDir.getAbsolutePath());
+        String dexDirName = "dexDir";
+        File appDir = getDir("sg", Context.MODE_PRIVATE);
+        File dexDir = getDir(dexDirName, Context.MODE_PRIVATE);
         Log.e(TAG, "attachBaseContext: apkFile=" + apkFile.getAbsolutePath());
         Log.e(TAG, "attachBaseContext: appDir=" + appDir.getAbsolutePath());
         Log.e(TAG, "attachBaseContext: dexDir=" + dexDir.getAbsolutePath());
@@ -68,12 +67,17 @@ public class ProxyApplication extends Application {
                         //解密
                         byte[] decrypt = EncryptUtil.decrypt(bytes, EncryptUtil.ivBytes);
                         //写到指定的目录
-                        FileOutputStream fos = new FileOutputStream(file);
+                        File file1 = new File(getDir(dexDirName, Context.MODE_PRIVATE).
+                                getAbsolutePath() + File.separator + name);
+                        if (file1.exists()) {
+                            file1.delete();
+                        }
+                        FileOutputStream fos = new FileOutputStream(file1);
                         fos.write(decrypt);
                         fos.flush();
                         fos.close();
-                        dexFiles.add(file);
-
+                        dexFiles.add(file1);
+                        file.delete();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -87,7 +91,7 @@ public class ProxyApplication extends Application {
 
         try {
             //2.把解密后的文件加载到系统
-            loadDex(dexFiles, versionDir);
+            loadDex(dexFiles, appDir);
         } catch (Exception e) {
             e.printStackTrace();
         }
